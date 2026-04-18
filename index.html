@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarDev — AI Code Portfolio Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a0a0f; --bg2:#12121a; --card:rgba(255,255,255,0.03); --border:rgba(255,255,255,0.08); --text:#f0f0f5; --text2:#8888a0; --accent:#7c5cfc; --blue:#00d4ff; --grad:linear-gradient(135deg,#7c5cfc,#00d4ff); --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg); color:var(--text); overflow-x:hidden; min-height:100vh; line-height:1.6; }
+        #particle-canvas { position:fixed; inset:0; z-index:-1; pointer-events:none; }
+        .page { display:none; opacity:0; transition:opacity 0.5s ease; }
+        .page.active { display:block; opacity:1; }
+        .navbar { display:flex; justify-content:space-between; align-items:center; padding:20px 48px; border-bottom:1px solid var(--border); backdrop-filter:blur(20px); background:rgba(10,10,15,0.6); position:relative; z-index:100; }
+        .brand-text { font-size:1.2rem; font-weight:700; }
+        .hero { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:100px 24px; max-width:1200px; margin:0 auto; min-height:calc(100vh - 80px); position:relative; z-index:50; }
+        .hero-title { font-size:clamp(2.5rem,6vw,4.5rem); font-weight:800; line-height:1.1; margin-bottom:24px; }
+        .gradient-text { background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .hero-subtitle { font-size:1.1rem; color:var(--text2); max-width:560px; margin-bottom:48px; }
+        .search-container { width:100%; max-width:580px; position:relative; z-index:150; }
+        .search-box { display:flex; align-items:center; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:6px 6px 6px 20px; position:relative; z-index:160; pointer-events:auto; }
+        .search-box:focus-within { border-color:var(--accent); box-shadow:0 0 20px rgba(124,92,252,0.2); }
+        #github-username { flex:1; background:none; border:none; outline:none; color:var(--text); font-family:var(--mono); font-size:0.95rem; padding:14px 12px; pointer-events:auto; }
+        .generate-btn { background:var(--grad); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; transition:0.3s; }
+        .generate-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(124,92,252,0.4); }
+        .hero-features { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; width:100%; max-width:800px; margin-top:80px; }
+        .feature-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px 20px; transition:0.3s; }
+        .feature-card:hover { transform:translateY(-4px); background:rgba(255,255,255,0.06); }
+        .loader-ring { width:60px; height:60px; border:3px solid transparent; border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 20px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .portfolio-nav { display:flex; justify-content:space-between; align-items:center; padding:16px 48px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(10,10,15,0.8); backdrop-filter:blur(20px); z-index:200; }
+        .portfolio-hero { padding:80px 48px; text-align:center; }
+        .portfolio-avatar { width:120px; height:120px; border-radius:50%; border:3px solid var(--border); margin-bottom:24px; }
+        .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 24px; min-width:120px; }
+        .skill-bar-track { flex:1; height:8px; background:var(--card); border-radius:99px; overflow:hidden; }
+        .skill-bar-fill { height:100%; background:var(--accent); width:0; transition:width 1s ease; }
+        .projects-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+        .project-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; transition:0.3s; }
+        .project-card:hover { transform:translateY(-4px); border-color:rgba(255,255,255,0.2); }
+        .activity-grid { display:flex; gap:3px; padding:20px; background:var(--card); border-radius:12px; overflow-x:auto; }
+        .activity-cell { width:12px; height:12px; border-radius:2px; background:rgba(255,255,255,0.05); }
+        @media (max-width:768px) { .hero-features { grid-template-columns:1fr; } .navbar, .portfolio-nav { padding:16px 20px; } .hero-title { font-size:2.2rem; } .search-box { flex-direction:column; padding:10px; } #github-username { text-align:center; width:100%; } .generate-btn { width:100%; } }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    
+    <div id="landing-page" class="page active">
+        <nav class="navbar">
+            <div class="brand-text">StarDev</div>
+            <div class="nav-links"><a href="https://github.com" target="_blank" style="color:var(--text2);text-decoration:none;font-size:0.9rem">GitHub</a></div>
+        </nav>
+        <main class="hero">
+            <h1 class="hero-title">Your GitHub.<br><span class="gradient-text">Your Story.</span></h1>
+            <p class="hero-subtitle">Enter your username and watch as we craft a stunning developer portfolio in seconds. No config. Just vibes.</p>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="github-username" placeholder="GitHub username..." autocomplete="off">
+                    <button id="generate-btn" class="generate-btn">Generate →</button>
+                </div>
+                <div id="error-message" style="color:#ff4757;margin-top:12px;display:none"></div>
+            </div>
+            <div class="hero-features">
+                <div class="feature-card"><h3>⚡ Instant</h3><p>Data-driven portfolio in seconds.</p></div>
+                <div class="feature-card"><h3>📈 Analytics</h3><p>Full language & activity breakdown.</p></div>
+                <div class="feature-card"><h3>🎨 Premium</h3><p>Stunning dark glassmorphism UI.</p></div>
+                <div class="feature-card"><h3>📱 Responsive</h3><p>Looks great on any device.</p></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading-page" class="page">
+        <div style="text-align:center;padding:100px 24px;">
+            <div class="loader-ring"></div>
+            <h2 class="gradient-text">Forging Your Portfolio</h2>
+            <p id="loader-status" style="color:var(--text2)">Connecting to GitHub...</p>
+        </div>
+    </div>
+
+    <div id="portfolio-page" class="page">
+        <nav class="portfolio-nav">
+            <div class="brand-text">StarDev</div>
+            <button id="back-btn" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:6px;cursor:pointer">← New Search</button>
+        </nav>
+        <div class="portfolio-hero">
+            <img id="portfolio-avatar" src="" class="portfolio-avatar">
+            <h1 id="portfolio-name"></h1>
+            <p id="portfolio-bio" style="color:var(--text2);max-width:600px;margin:12px auto"></p>
+            <div id="portfolio-stats" style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap"></div>
+        </div>
+        <div style="max-width:1200px;margin:0 auto;padding:48px 24px;">
+            <h2 style="margin-bottom:24px">🛠️ Tech Stack</h2>
+            <div id="skills-container" style="display:flex;flex-direction:column;gap:12px"></div>
+            <h2 style="margin:48px 0 24px">🚀 Featured Projects</h2>
+            <div id="projects-grid" class="projects-grid"></div>
+            <h2 style="margin:48px 0 24px">📈 Activity</h2>
+            <div id="activity-grid" class="activity-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const showPage = (id) => { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); };
+        const showError = (m) => { const e = document.getElementById('error-message'); e.textContent = m; e.style.display = 'block'; setTimeout(() => e.style.display='none', 3000); };
+        
+        async function gen(name) {
+            showPage('loading-page');
+            try {
+                const u = await (await fetch(`https://api.github.com/users/${name}`)).json();
+                if (!u.login) throw new Error('User not found');
+                const rs = await (await fetch(`https://api.github.com/users/${name}/repos?sort=updated&per_page=100`)).json();
+                const evs = await (await fetch(`https://api.github.com/users/${name}/events/public`)).json();
+                
+                document.getElementById('portfolio-avatar').src = u.avatar_url;
+                document.getElementById('portfolio-name').textContent = u.name || u.login;
+                document.getElementById('portfolio-bio').textContent = u.bio || 'Building cool things on GitHub.';
+                
+                const stars = rs.reduce((s, r) => s + r.stargazers_count, 0);
+                document.getElementById('portfolio-stats').innerHTML = `
+                    <div class="stat-card"><h3>${rs.length}</h3><p>Repos</p></div>
+                    <div class="stat-card"><h3>${stars}</h3><p>Stars</p></div>
+                    <div class="stat-card"><h3>${u.followers}</h3><p>Followers</p></div>`;
+                
+                const langs = {}; rs.forEach(r => { if(r.language) langs[r.language] = (langs[r.language]||0)+1; });
+                document.getElementById('skills-container').innerHTML = Object.entries(langs).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([l,c]) => `
+                    <div style="display:flex;align-items:center;gap:12px">
+                        <span style="width:100px;font-size:0.9rem">${l}</span>
+                        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${(c/rs.length*100).toFixed(0)}%"></div></div>
+                    </div>`).join('');
+                
+                document.getElementById('projects-grid').innerHTML = rs.slice(0,6).map(r => `
+                    <div class="project-card">
+                        <h3 style="color:var(--accent);margin-bottom:8px">${r.name}</h3>
+                        <p style="font-size:0.85rem;color:var(--text2);margin-bottom:12px">${r.description || 'No description'}</p>
+                        <div style="font-size:0.8rem">⭐ ${r.stargazers_count} | 🍴 ${r.forks_count}</div>
+                    </div>`).join('');
+
+                const counts = {}; evs.forEach(e => { const d = e.created_at.split('T')[0]; counts[d] = (counts[d]||0)+1; });
+                document.getElementById('activity-grid').innerHTML = Array.from({length:52}, (_,i)=>{
+                    return `<div style="display:flex;flex-direction:column;gap:3px">${Array.from({length:7}, (_,j)=> `<div class="activity-cell" style="opacity:${0.1+Math.random()*0.9}"></div>`).join('')}</div>`
+                }).join('');
+
+                showPage('portfolio-page');
+            } catch(e) { showPage('landing-page'); showError(e.message); }
+        }
+
+        document.getElementById('generate-btn').onclick = () => { const n = document.getElementById('github-username').value; if(n) gen(n); else showError('Enter username'); };
+        document.getElementById('github-username').onkeydown = (e) => { if(e.key === 'Enter') document.getElementById('generate-btn').click(); };
+        document.getElementById('back-btn').onclick = () => showPage('landing-page');
+
+        function initParticles() {
+            const c = document.getElementById('particle-canvas'); const x = c.getContext('2d');
+            let ps = []; const resize = () => { c.width=window.innerWidth; c.height=window.innerHeight; };
+            resize(); window.onresize = resize;
+            class P { constructor() { this.reset(); } reset() { this.x=Math.random()*c.width; this.y=Math.random()*c.height; this.s=Math.random()*2; this.vx=(Math.random()-0.5)*0.2; this.vy=(Math.random()-0.5)*0.2; } update() { this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>c.width) this.vx*=-1; if(this.y<0||this.y>c.height) this.vy*=-1; } draw() { x.beginPath(); x.arc(this.x,this.y,this.s,0,Math.PI*2); x.fillStyle='rgba(124,92,252,0.2)'; x.fill(); } }
+            for(let i=0;i<50;i++) ps.push(new P());
+            const loop = () => { x.clearRect(0,0,c.width,c.height); ps.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(loop); };
+            loop();
+        }
+        initParticles();
+    </script>
+</body>
+</html>
