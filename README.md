@@ -3,7 +3,7 @@
 **StarDev** is a premium, single-file developer portfolio generator. It transforms your GitHub profile into a stunning showcase in seconds. 
 
 ## 🚀 Live Demo
-[View Live Site](https://stardev.vercel.app)
+[View Live Site](https://prompt-wars-seven.vercel.app/)
 
 ## ✨ Key Features
 - **Zero Configuration**: A fully functional Single-Page Application (SPA) in a single HTML file.
@@ -29,4 +29,4 @@ npx -y serve .
 - **Google Antigravity**: Developed using AI-native intent-driven workflows.
 
 ---
-Built with ❤️ for PromptWars.
+Built with ❤️ for Asif.
